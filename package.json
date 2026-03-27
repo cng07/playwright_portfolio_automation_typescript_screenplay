@@ -1,0 +1,39 @@
+{
+  "name": "playwright_portfolio_automation_typescript_screenplay",
+  "version": "1.0.0",
+  "description": "Playwright portfolio automation using Screenplay Pattern",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:chrome": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "test:smoke": "playwright test --grep @smoke",
+    "ci": "CI=true playwright test --reporter=html,json,junit",
+    "docker:build": "docker build -t playwright-screenplay .",
+    "docker:run": "docker run --rm -v $(pwd)/test-results:/app/test-results playwright-screenplay",
+    "docker:compose:up": "docker-compose up",
+    "docker:compose:down": "docker-compose down"
+  },
+  "keywords": [
+    "playwright",
+    "automation",
+    "screenplay",
+    "testing"
+  ],
+  "author": "Carlos Ng",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@playwright/mcp": "^0.0.68",
+    "@types/node": "^25.2.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@fast-csv/parse": "^5.0.5",
+    "fast-csv": "^5.0.5"
+  }
+}
