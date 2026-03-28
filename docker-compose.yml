@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  playwright-tests:
+    build: .
+    container_name: playwright-screenplay-tests
+    environment:
+      - CI=true
+      - PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-results/junit.xml
+    volumes:
+      - ./test-results:/app/test-results
+    ports:
+      - "9323:9323"
