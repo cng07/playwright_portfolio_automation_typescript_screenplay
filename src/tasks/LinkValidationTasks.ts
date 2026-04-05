@@ -79,18 +79,19 @@ export const VerifyNavigationLinkHrefs = () => ({
 export const VerifySocialMediaLinkHrefs = () => ({
   performAs: async (actor: Actor) => {
     const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+    const mainContent = page.locator('#main-content, main, [role="main"]').first();
 
     log(`Verifying social media link hrefs`);
     const socialLinks = [
-      { pattern: 'linkedin', name: 'LinkedIn' },
-      { pattern: 'github', name: 'GitHub' },
-      { pattern: 'ieee', name: 'IEEE' },
-      { pattern: 'astqb', name: 'ASTQB' },
+      { selector: 'a[href*="linkedin.com"]', pattern: /linkedin\.com/i, name: 'LinkedIn' },
+      { selector: 'a[href*="github.com"]', pattern: /github\.com/i, name: 'GitHub' },
+      { selector: 'a[href*="ieeexplore.ieee.org"]', pattern: /ieeexplore\.ieee\.org/i, name: 'IEEE' },
+      { selector: 'a[href*="atsqa.org"], a[href*="astqb"]', pattern: /atsqa\.org|astqb/i, name: 'AT*SQA / ASTQB' },
     ];
 
     for (const social of socialLinks) {
-      const linkElement = page.locator(`a[href*="${social.pattern}"]`).first();
-      await expect(linkElement, `Expected ${social.name} social link`).toHaveAttribute('href', new RegExp(social.pattern));
+      const linkElement = mainContent.locator(social.selector).first();
+      await expect(linkElement, `Expected ${social.name} social link`).toHaveAttribute('href', social.pattern);
     }
 
     log(`[OK] Social media link hrefs verified`);
