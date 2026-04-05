@@ -28,14 +28,41 @@ const expectVisibleSection = async (actor: Actor, selector: string, description:
 export const VerifyHomePageNavigationBar = () => ({
   performAs: async (actor: Actor) => {
     const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+    const primaryNav = page.getByRole('navigation', { name: /Primary/i });
 
     log(`Verifying navigation bar`);
-    await expect(page.locator('nav')).toBeVisible();
+    await expect(primaryNav).toBeVisible();
 
-    const navLinks = ['/', '/about', '/projects', '/resume', '/contact', '/experience', '/education', '/certifications'];
-    for (const href of navLinks) {
-      const link = page.locator(`a[href="${href}"]`).first();
-      await expect(link, `Expected navigation link ${href} to be visible`).toBeVisible();
+    for (const linkName of ['Home', 'Projects', 'Resume', 'About', 'Contact']) {
+      await expect(
+        primaryNav.getByRole('link', { name: linkName, exact: true }),
+        `Expected primary navigation link ${linkName} to be visible`,
+      ).toBeVisible();
+    }
+
+    const overflowLinks = ['Experience', 'Education', 'Certifications'];
+    const visibleOverflowLinkCount = await primaryNav.locator(
+      'a[href="/experience"]:visible, a[href="/education"]:visible, a[href="/certifications"]:visible',
+    ).count();
+
+    if (visibleOverflowLinkCount >= overflowLinks.length) {
+      for (const linkName of overflowLinks) {
+        await expect(
+          primaryNav.getByRole('link', { name: linkName, exact: true }),
+          `Expected overflow navigation link ${linkName} to be visible`,
+        ).toBeVisible();
+      }
+    } else {
+      const moreButton = primaryNav.getByRole('button', { name: /More/i });
+      await expect(moreButton, 'Expected More button for overflow navigation').toBeVisible();
+      await moreButton.click();
+
+      for (const linkName of overflowLinks) {
+        await expect(
+          primaryNav.getByRole('menuitem', { name: linkName, exact: true }),
+          `Expected overflow menu item ${linkName} to be visible`,
+        ).toBeVisible();
+      }
     }
 
     log(`[OK] Navigation bar verified`);
@@ -61,17 +88,18 @@ export const VerifyHomePageHeroSection = () => ({
 export const VerifyHomePageSocialMediaLinks = () => ({
   performAs: async (actor: Actor) => {
     const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+    const mainContent = page.locator('#main-content, main, [role="main"]').first();
 
     log(`Verifying social media links`);
     const socialLinks = [
-      'a[href*="linkedin"]',
-      'a[href*="github"]',
-      'a[href*="ieee"]',
-      'a[href*="astqb"]',
+      'a[href*="linkedin.com"]',
+      'a[href*="github.com"]',
+      'a[href*="ieeexplore.ieee.org"]',
+      'a[href*="atsqa.org"], a[href*="astqb"]',
     ];
 
     for (const selector of socialLinks) {
-      const link = page.locator(selector).first();
+      const link = mainContent.locator(selector).first();
       await expect(link, `Expected social link ${selector} to exist`).toBeVisible();
     }
 
@@ -85,8 +113,19 @@ export const VerifyHomePageSocialMediaLinks = () => ({
  */
 export const VerifyHomePageFeaturedProjects = () => ({
   performAs: async (actor: Actor) => {
+    const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+    const mainContent = page.locator('#main-content, main, [role="main"]').first();
+
     log(`Verifying featured projects section`);
-    await expectVisibleSection(actor, '[class*="project"], [class*="featured"]', 'featured projects section');
+    await expect(page.getByRole('heading', { name: /Featured Projects/i })).toBeVisible();
+    await expect(
+      mainContent.getByRole('link', { name: /Repository/i }).first(),
+      'Expected at least one featured project repository link',
+    ).toBeVisible();
+    await expect(
+      mainContent.getByRole('link', { name: /View All Projects/i }),
+      'Expected View All Projects link',
+    ).toBeVisible();
     log(`[OK] Featured projects section verified`);
     return actor;
   },
@@ -149,8 +188,11 @@ export const VerifyProjectsPageContent = () => ({
  */
 export const VerifyResumePageContent = () => ({
   performAs: async (actor: Actor) => {
+    const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+
     log(`Verifying resume page content`);
-    await expectVisibleSection(actor, '[class*="pdf"], [class*="resume"], iframe[src*="pdf"]', 'resume content');
+    await expect(page.getByRole('heading', { name: 'Resume', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Download PDF/i })).toBeVisible();
     log(`[OK] Resume page content verified`);
     return actor;
   },
@@ -161,12 +203,10 @@ export const VerifyResumePageContent = () => ({
  */
 export const VerifyResumeDownloadOptions = () => ({
   performAs: async (actor: Actor) => {
+    const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+
     log(`Verifying resume download options`);
-    await expectVisibleSection(
-      actor,
-      'a[download], button:has-text("Download"), iframe[src*="pdf"], [class*="pdf-viewer"]',
-      'resume download button or PDF viewer',
-    );
+    await expect(page.getByRole('button', { name: /Download PDF/i })).toBeVisible();
     log(`[OK] Resume download options verified`);
     return actor;
   },
@@ -177,8 +217,16 @@ export const VerifyResumeDownloadOptions = () => ({
  */
 export const VerifyContactPageForm = () => ({
   performAs: async (actor: Actor) => {
+    const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+    const mainContent = page.locator('#main-content, main, [role="main"]').first();
+    const contactMethods = mainContent.locator(
+      'a[href^="mailto:"], a[href*="linkedin.com"], a[href*="github.com"], a[href*="ieeexplore.ieee.org"], a[href*="atsqa.org"]',
+    );
+
     log(`Verifying contact page form`);
-    await expectVisibleSection(actor, 'form, [class*="form"], [class*="contact"]', 'contact form');
+    await expect(page.getByRole('heading', { name: /Get in Touch/i })).toBeVisible();
+    expect(await contactMethods.count(), 'Expected visible contact methods in main content').toBeGreaterThanOrEqual(5);
+    await expect(contactMethods.first(), 'Expected at least one contact method to be visible').toBeVisible();
     log(`[OK] Contact page form verified`);
     return actor;
   },
@@ -190,12 +238,24 @@ export const VerifyContactPageForm = () => ({
 export const VerifyContactPageFields = () => ({
   performAs: async (actor: Actor) => {
     const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+    const mainContent = page.locator('#main-content, main, [role="main"]').first();
 
     log(`Verifying contact page fields`);
-    await expect(page.locator('input[name*="name"], input[type="text"]').first()).toBeVisible();
-    await expect(page.locator('input[type="email"]').first()).toBeVisible();
-    await expect(page.locator('textarea').first()).toBeVisible();
-    await expect(page.locator('button[type="submit"]').first()).toBeVisible();
+    const contactLinks = [
+      { selector: 'a[href^="mailto:"]', description: 'email contact link' },
+      { selector: 'a[href*="linkedin.com/in/"]', description: 'LinkedIn contact link' },
+      { selector: 'a[href*="github.com"]', description: 'GitHub contact link' },
+      { selector: 'a[href*="ieeexplore.ieee.org"]', description: 'IEEE contact link' },
+      { selector: 'a[href*="atsqa.org"]', description: 'AT*SQA profile link' },
+    ];
+
+    for (const contactLink of contactLinks) {
+      await expect(
+        mainContent.locator(contactLink.selector).first(),
+        `Expected ${contactLink.description} to be visible`,
+      ).toBeVisible();
+    }
+
     log(`[OK] Contact page fields verified`);
     return actor;
   },
@@ -206,8 +266,11 @@ export const VerifyContactPageFields = () => ({
  */
 export const VerifyExperiencePageContent = () => ({
   performAs: async (actor: Actor) => {
+    const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+
     log(`Verifying experience page content`);
-    await expectVisibleSection(actor, '[class*="experience"], [class*="job"], [class*="role"]', 'experience content');
+    await expect(page.getByRole('heading', { name: /Work Experience/i })).toBeVisible();
+    await expectVisibleSection(actor, 'main ul, main ol, main [role="list"]', 'experience content');
     log(`[OK] Experience page content verified`);
     return actor;
   },
@@ -218,8 +281,13 @@ export const VerifyExperiencePageContent = () => ({
  */
 export const VerifyExperiencePageSections = () => ({
   performAs: async (actor: Actor) => {
+    const page = actor.recall<BrowseTheWeb>(BrowseTheWeb).getPage();
+    const experienceLists = page.locator('main ul, main ol, main [role="list"]');
+
     log(`Verifying experience page sections`);
-    await expectVisibleSection(actor, '[class*="job"], [class*="position"], [class*="role"]', 'experience sections');
+    expect(await experienceLists.count(), 'Expected multiple experience sections').toBeGreaterThanOrEqual(3);
+    await expect(experienceLists.first(), 'Expected the first experience section to be visible').toBeVisible();
+    await expect(page.getByText(/Senior Quality Assurance Automation Engineer/i)).toBeVisible();
     log(`[OK] Experience page sections verified`);
     return actor;
   },
