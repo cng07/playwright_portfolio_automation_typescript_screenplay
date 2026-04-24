@@ -10,6 +10,7 @@ test-results-*.json
 # Playwright
 .auth/
 playwright/.cache/
+playwright-report/
 
 # IDE
 .vscode/

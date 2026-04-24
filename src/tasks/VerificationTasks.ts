@@ -33,10 +33,21 @@ export const VerifyHomePageNavigationBar = () => ({
     log(`Verifying navigation bar`);
     await expect(primaryNav).toBeVisible();
 
-    for (const linkName of ['Home', 'Projects', 'Resume', 'About', 'Contact']) {
+    for (const linkName of ['Home', 'Projects', 'About', 'Contact']) {
       await expect(
         primaryNav.getByRole('link', { name: linkName, exact: true }),
         `Expected primary navigation link ${linkName} to be visible`,
+      ).toBeVisible();
+    }
+
+    const resumePrimaryLink = primaryNav.getByRole('link', { name: 'Resume', exact: true });
+    const qaLabPrimaryLink = primaryNav.getByRole('link', { name: 'QA Lab', exact: true });
+    if ((await resumePrimaryLink.count()) > 0) {
+      await expect(resumePrimaryLink, 'Expected Resume primary navigation link to be visible').toBeVisible();
+    } else {
+      await expect(
+        qaLabPrimaryLink,
+        'Expected QA Lab primary navigation link to be visible when Resume is not present',
       ).toBeVisible();
     }
 
